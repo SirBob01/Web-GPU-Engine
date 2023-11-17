@@ -5,12 +5,12 @@ import './App.css'
 function App() {
   const animationRequestRef = useRef<number>();
   const [renderer, setRenderer] = useState<Renderer | null>(null);
-  const [canvas, setCanvas] = useState<HTMLCanvasElement | null>(null);
+  const [container, setContainer] = useState<HTMLElement | null>(null);
   
   // Initialize the renderer
   useEffect(() => {
-    if (canvas && renderer === null) {
-      Renderer.createRenderer({ canvas }).then((renderer) => {
+    if (container && renderer === null) {
+      Renderer.createRenderer({ container }).then((renderer) => {
         setRenderer(renderer);
         const g1 = new Geometry({
           label: 'Triangle 1',
@@ -64,7 +64,7 @@ function App() {
     }
 
     return () => renderer?.dispose();
-  }, [canvas, renderer]);
+  }, [container, renderer]);
 
   // Run main render loop
   useEffect(() => {
@@ -80,11 +80,7 @@ function App() {
   }, [renderer]);
 
   return (
-    <canvas
-      width={800}
-      height={600}
-      ref={setCanvas}
-    />
+    <div id="container" ref={setContainer}/>
   )
 }
 

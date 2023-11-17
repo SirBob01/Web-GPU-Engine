@@ -4,7 +4,7 @@ import { Material, Model, VERTEX_BUFFER_LAYOUTS, VertexLayout } from "./Core";
  * Renderer configuration.
  */
 interface RendererDesc {
-  canvas: HTMLCanvasElement;
+  container: HTMLElement;
 }
 
 /**
@@ -88,7 +88,25 @@ export class Renderer {
       throw new Error("Failed to create GPU device.");
     }
 
-    return new Renderer(config.canvas, device);
+    // Create the canvas
+    const canvas = document.createElement("canvas");
+    canvas.width = config.container.clientWidth;
+    canvas.height = config.container.clientHeight;
+    config.container.appendChild(canvas);
+
+    // Resize the canvas to fit the container
+    const resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentBoxSize) {
+          const contentBoxSize = entry.contentBoxSize[0];
+          canvas.width = contentBoxSize.inlineSize;
+          canvas.height = contentBoxSize.blockSize;
+        }
+      }
+    });
+    resizeObserver.observe(config.container);
+
+    return new Renderer(canvas, device);
   }
 
   /**
