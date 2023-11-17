@@ -1,4 +1,5 @@
 import { Material, Model, VERTEX_BUFFER_LAYOUTS, VertexLayout } from "./Core";
+import { Color } from "./Math";
 
 /**
  * Renderer configuration.
@@ -14,6 +15,7 @@ export class Renderer {
   public readonly canvas: HTMLCanvasElement;
   public readonly device: GPUDevice;
   public readonly context: GPUCanvasContext;
+  public readonly clearColor: Color;
 
   private models: Set<Model> = new Set();
   private pipelineGroups: Map<number, Record<VertexLayout['type'], GPURenderPipeline>> = new Map();
@@ -27,6 +29,8 @@ export class Renderer {
       format: navigator.gpu.getPreferredCanvasFormat(),
       alphaMode: "premultiplied"
     });
+
+    this.clearColor = new Color();
   }
 
   private createPipelineGroup(material: Material) {
@@ -135,7 +139,7 @@ export class Renderer {
     const renderpass = commandEncoder.beginRenderPass({
       colorAttachments: [
         {
-          clearValue: { r: 1, g: 0.5, b: 0.5, a: 1.0 },
+          clearValue: [this.clearColor.r, this.clearColor.g, this.clearColor.b, 1],
           loadOp: "clear",
           storeOp: "store",
           view: this.context.getCurrentTexture().createView(),

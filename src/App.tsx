@@ -60,6 +60,7 @@ function App() {
           material,
           transforms: [new Float32Array([])]
         });
+        renderer.clearColor.setFromHex(0xAA00AA);
       });
     }
 
