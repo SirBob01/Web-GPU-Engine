@@ -1,3 +1,4 @@
+import { getVertexShaderInput } from ".";
 import { Color, INSTANCE_BUFFER_LAYOUT, Material, Model, VERTEX_BUFFER_LAYOUTS, VertexLayout } from "./Core";
 
 /**
@@ -11,12 +12,13 @@ interface RendererDesc {
  * WebGPU based renderer.
  */
 export class Renderer {
-  public readonly canvas: HTMLCanvasElement;
-  public readonly device: GPUDevice;
-  public readonly context: GPUCanvasContext;
-  public readonly clearColor: Color;
+  readonly canvas: HTMLCanvasElement;
+  readonly device: GPUDevice;
+  readonly context: GPUCanvasContext;
+  readonly clearColor: Color;
+  readonly models: Set<Model> = new Set();
 
-  private models: Set<Model> = new Set();
+  private shaderCache: Map<string, Record<VertexLayout['type'], GPUShaderModule>> = new Map();
   private pipelineGroups: Map<number, Record<VertexLayout['type'], GPURenderPipeline>> = new Map();
   
   private constructor(canvas: HTMLCanvasElement, device: GPUDevice) {
@@ -37,7 +39,7 @@ export class Renderer {
     for (const layoutType in VERTEX_BUFFER_LAYOUTS) {
       const pipeline = this.device.createRenderPipeline({
         vertex: {
-          module: material.shader,
+          module: material.shaderModules[layoutType as VertexLayout['type']],
           entryPoint: "vertex_main",
           buffers: [
             INSTANCE_BUFFER_LAYOUT,
@@ -45,7 +47,7 @@ export class Renderer {
           ],
         },
         fragment: {
-          module: material.shader,
+          module: material.shaderModules[layoutType as VertexLayout['type']],
           entryPoint: "fragment_main",
           targets: [
             {
@@ -115,21 +117,30 @@ export class Renderer {
   }
 
   /**
-   * Add a model to draw.
+   * Get the shader modules corresponding to the shader code.
    *
-   * @param model
+   * @param code
+   * @returns 
    */
-  add(model: Model) {
-    this.models.add(model);
-  }
-
-  /**
-   * Stop drawing a model.
-   *
-   * @param model
-   */
-  remove(model: Model) {
-    this.models.delete(model);
+  getShaderModules(code: string) {
+    let record = this.shaderCache.get(code);
+    if (!record) {
+      record = {} as Record<string, GPUShaderModule>;
+      for (const key in VERTEX_BUFFER_LAYOUTS) {
+        const layout = key as VertexLayout['type'];
+        const input = getVertexShaderInput(layout);
+        const shaderCode = `
+          ${input}
+          ${code}
+        `;
+        record[layout] = this.device.createShaderModule({
+          label: `ShaderModule(${layout} - ${code})`,
+          code: shaderCode,
+        });
+      }
+      this.shaderCache.set(code, record);
+    }
+    return record;
   }
 
   /**

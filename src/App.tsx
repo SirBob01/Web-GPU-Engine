@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Geometry, Material, Model, Renderer, shaders } from './Renderer'
-import './App.css'
+import { Geometry, Material, Model, Renderer, BASIC_SHADER } from './Renderer'
 import { mat4 } from 'wgpu-matrix';
+import './App.css'
 
 function App() {
   const animationRequestRef = useRef<number>();
@@ -49,10 +49,10 @@ function App() {
         });
         const material = new Material({
           renderer,
-          shaderCode: shaders,
+          shaderCode: BASIC_SHADER,
           uniforms: {},
         });
-        renderer.add(new Model({
+        renderer.models.add(new Model({
           renderer,
           label: 'Triangle 1',
           geometry: g1,
@@ -64,7 +64,7 @@ function App() {
           geometry: g2,
           material,
         });
-        renderer.add(new Model({
+        renderer.models.add(new Model({
           renderer,
           label: 'Triangle 2',
           geometry: g2,

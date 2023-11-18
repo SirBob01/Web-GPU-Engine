@@ -2,6 +2,7 @@ import { Color } from "./Color";
 import { Renderer } from "../Renderer";
 import { Texture } from "./Texture";
 import { Uniform } from "./Uniform";
+import { VertexLayout } from "./Vertex";
 
 let materialId = 0;
 
@@ -20,7 +21,7 @@ export interface MaterialDescriptor {
  */
 export class Material {
   readonly id = materialId++;
-  readonly shader: GPUShaderModule;
+  readonly shaderModules: Record<VertexLayout['type'], GPUShaderModule>;
   readonly uniforms: Record<string, Uniform>;
   readonly primitiveToplogy: GPUPrimitiveTopology;
   readonly culling: GPUCullMode;
@@ -28,9 +29,7 @@ export class Material {
   readonly diffuseColor: Color;
 
   constructor(descriptor: MaterialDescriptor) {
-    this.shader = descriptor.renderer.device.createShaderModule({
-      code: descriptor.shaderCode,
-    });
+    this.shaderModules = descriptor.renderer.getShaderModules(descriptor.shaderCode);
     this.uniforms = descriptor.uniforms;
     this.culling = descriptor.culling ?? 'back';
     this.primitiveToplogy = descriptor.primitiveTopology ?? 'triangle-list';
