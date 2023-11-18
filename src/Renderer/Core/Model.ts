@@ -1,11 +1,72 @@
+
+import { Mat4 } from "wgpu-matrix";
+import { Renderer } from "../Renderer";
 import { Geometry } from "./Geometry";
 import { Material } from "./Material";
+import { INSTANCE_BUFFER_LAYOUT } from ".";
+
+export interface ModelDescriptor {
+  /**
+   * Renderer context.
+   */
+  renderer: Renderer;
+
+  /**
+   * Identifier of the model.
+   */
+  label: string;
+
+  /**
+   * Model geometry.
+   */
+  geometry: Geometry;
+  
+  /**
+   * Material properties.
+   */
+  material: Material;
+
+  /**
+   * Instanced count (must be at least 1).
+   */
+  instanceCount?: number;
+}
+
 
 /**
  * A model is a combination of a geometry, a material, and a set of transforms (for instanced models).
  */
-export interface Model {
-  geometry: Geometry;
-  material: Material;
-  transforms: Float32Array[];
+export class Model {
+  private renderer: Renderer;
+  readonly geometry: Geometry;
+  readonly material: Material;
+
+  readonly instanceCount: number;
+  readonly instances: GPUBuffer;
+
+  constructor(descriptor: ModelDescriptor) {
+    if (descriptor.instanceCount !== undefined && descriptor.instanceCount < 1) {
+      throw new Error(`Model instance count must be at least 1`);
+    }
+    this.renderer = descriptor.renderer;
+    this.geometry = descriptor.geometry;
+    this.material = descriptor.material;
+    this.instanceCount = descriptor.instanceCount ?? 1;
+    this.instances = descriptor.renderer.device.createBuffer({
+      label: `ModelInstances(${descriptor.label})`,
+      size: this.instanceCount * INSTANCE_BUFFER_LAYOUT.arrayStride,
+      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
+    });
+  }
+
+  /**
+   * Set the transform of the model (or an instance if an index is provided).
+   * 
+   * @param transform
+   * @param index
+   */
+  transform(transform: Mat4, index = 0) {
+    const buffer = new Float32Array(transform);
+    this.renderer.device.queue.writeBuffer(this.instances, index * INSTANCE_BUFFER_LAYOUT.arrayStride, buffer, 0, buffer.length);
+  }
 }

@@ -1,5 +1,4 @@
-import { Material, Model, VERTEX_BUFFER_LAYOUTS, VertexLayout } from "./Core";
-import { Color } from "./Math";
+import { Color, INSTANCE_BUFFER_LAYOUT, Material, Model, VERTEX_BUFFER_LAYOUTS, VertexLayout } from "./Core";
 
 /**
  * Renderer configuration.
@@ -36,12 +35,14 @@ export class Renderer {
   private createPipelineGroup(material: Material) {
     const pipelineGroup = new Map<VertexLayout['type'], GPURenderPipeline>()
     for (const layoutType in VERTEX_BUFFER_LAYOUTS) {
-      const layout = VERTEX_BUFFER_LAYOUTS[layoutType as VertexLayout['type']];
       const pipeline = this.device.createRenderPipeline({
         vertex: {
           module: material.shader,
           entryPoint: "vertex_main",
-          buffers: [layout],
+          buffers: [
+            INSTANCE_BUFFER_LAYOUT,
+            VERTEX_BUFFER_LAYOUTS[layoutType as VertexLayout['type']],
+          ],
         },
         fragment: {
           module: material.shader,
@@ -152,9 +153,16 @@ export class Renderer {
       const pipeline = pipelineGroup[model.geometry.layout];
 
       renderpass.setPipeline(pipeline);
-      renderpass.setVertexBuffer(0, model.geometry.vertices);
+      renderpass.setVertexBuffer(0, model.instances);
+      renderpass.setVertexBuffer(1, model.geometry.vertices);
       renderpass.setIndexBuffer(model.geometry.indices, model.geometry.indexFormat);
-      renderpass.draw(model.geometry.count, model.transforms.length, 0, 0);
+      renderpass.drawIndexed(
+        model.geometry.indexCount,
+        model.instanceCount,
+        0,
+        0,
+        0,
+      );
     }
 
     renderpass.end();

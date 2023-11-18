@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
-import { Geometry, Material, Renderer, shaders } from './Renderer'
+import { Geometry, Material, Model, Renderer, shaders } from './Renderer'
 import './App.css'
+import { mat4 } from 'wgpu-matrix';
 
 function App() {
   const animationRequestRef = useRef<number>();
@@ -49,17 +50,27 @@ function App() {
         const material = new Material({
           renderer,
           shaderCode: shaders,
+          uniforms: {},
         });
-        renderer.add({
+        renderer.add(new Model({
+          renderer,
+          label: 'Triangle 1',
           geometry: g1,
           material,
-          transforms: [new Float32Array([])]
-        });
-        renderer.add({
+        }));
+        const model = new Model({
+          renderer,
+          label: 'Triangle 2',
           geometry: g2,
           material,
-          transforms: [new Float32Array([])]
         });
+        renderer.add(new Model({
+          renderer,
+          label: 'Triangle 2',
+          geometry: g2,
+          material,
+        }));
+        model.transform(mat4.identity());
         renderer.clearColor.setFromHex(0xAA00AA);
       });
     }

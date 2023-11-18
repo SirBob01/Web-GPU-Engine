@@ -1,4 +1,5 @@
 import { Renderer } from "../Renderer";
+import { align } from "../Utils";
 import { VERTEX_BUFFER_LAYOUTS, VertexLayout } from './Vertex';
 
 export interface GeometryDescriptor {
@@ -27,36 +28,37 @@ export interface GeometryDescriptor {
  * GPU allocated geometry buffers.
  */
 export class Geometry {
-  readonly count: number;
+  private renderer: Renderer;
+  readonly vertexCount: number;
+  readonly indexCount: number;
+
   readonly layout: VertexLayout['type'];
-  readonly vertices: GPUBuffer;
-  readonly indices: GPUBuffer;
   readonly indexFormat: GPUIndexFormat;
 
+  readonly vertices: GPUBuffer;
+  readonly indices: GPUBuffer;
+
   constructor(descriptor: GeometryDescriptor) {
+    this.renderer = descriptor.renderer;
+    this.vertexCount = descriptor.vertices.positions.length / 3;
+    const indices = descriptor.indices ?? Array.from(new Array(this.vertexCount), (_, i) => i);
+    this.indexCount = indices.length;
+   
     this.layout = descriptor.vertices.type;
-    this.count = descriptor.vertices.positions.length / 3;
+    this.indexFormat = this.needs32Bit(indices) ? 'uint32' : 'uint16';
 
-    this.verifyGeometry(descriptor.vertices, descriptor.indices);
-    const vertexArray = this.buildVertexArray(descriptor.vertices);
-    const indexArray = this.buildIndexArray(descriptor.indices);
+    this.verifyGeometry(descriptor.vertices, indices);
+    this.vertices = this.buildVertexArray(descriptor.label, descriptor.vertices);
+    this.indices = this.buildIndexArray(descriptor.label, indices);
+  }
 
-    this.vertices = descriptor.renderer.device.createBuffer({
-      label: `VertexBuffer(${descriptor.label})`,
-      size: vertexArray.byteLength,
-      usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
-    });
-    this.indices = descriptor.renderer.device.createBuffer({
-      label: `IndexBuffer(${descriptor.label})`,
-      size: indexArray?.byteLength ?? 0,
-      usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
-    });
-    this.indexFormat = indexArray instanceof Uint16Array ? 'uint16' : 'uint32';
-
-    descriptor.renderer.device.queue.writeBuffer(this.vertices, 0, vertexArray, 0, vertexArray.length);
-    if (indexArray) {
-      descriptor.renderer.device.queue.writeBuffer(this.indices, 0, indexArray, 0, indexArray.length);
+  private needs32Bit(array: number[]) {
+    for (const i of array) {
+      if (i > 65535) {
+        return true;
+      }
     }
+    return false;
   }
 
   private verifyGeometry(vertices: VertexLayout, indices?: number[]) {
@@ -66,37 +68,38 @@ export class Geometry {
 
     if (indices) {
       for (const index of indices) {
-        if (index < 0 || index >= this.count) {
+        if (index < 0 || index >= this.vertexCount) {
           throw new Error("Index array out of bounds.");
         }
       }
     }
 
-    if ('normals' in vertices && vertices.normals.length / 3 !== this.count) {
+    if ('normals' in vertices && vertices.normals.length / 3 !== this.vertexCount) {
       throw new Error("Normal array length must match position array length.");
     }
-    if ('colors' in vertices && vertices.colors.length / 4 !== this.count) {
+    if ('colors' in vertices && vertices.colors.length / 4 !== this.vertexCount) {
       throw new Error("Color array length must match position array length.");
     }
-    if ('uvs' in vertices && vertices.uvs.length / 2 !== this.count) {
+    if ('uvs' in vertices && vertices.uvs.length / 2 !== this.vertexCount) {
       throw new Error("UV array length must match position array length.");
     }
-    if ('tangents' in vertices && vertices.tangents.length / 3 !== this.count) {
+    if ('tangents' in vertices && vertices.tangents.length / 3 !== this.vertexCount) {
       throw new Error("Tangent array length must match position array length.");
     }
   }
 
-  private needs32Bits(array: number[]) {
-    for (const num of array) {
-      if (num > 65535) return true;
-    }
-    return false;
-  }
+  private buildVertexArray(label: string, vertices: VertexLayout) {
+    const arrayStride = VERTEX_BUFFER_LAYOUTS[vertices.type].arrayStride;
+    const stride = arrayStride / Float32Array.BYTES_PER_ELEMENT;
 
-  private buildVertexArray(vertices: VertexLayout) {
-    const stride = VERTEX_BUFFER_LAYOUTS[vertices.type].arrayStride / 4;
-    const array = new Float32Array(this.count * stride);
-    for (let i = 0; i < vertices.positions.length / 3; i++) {
+    const buffer = this.renderer.device.createBuffer({
+      label: `VertexBuffer(${label})`,
+      size: this.vertexCount * arrayStride,
+      usage: GPUBufferUsage.VERTEX,
+      mappedAtCreation: true,
+    });
+    const array = new Float32Array(buffer.getMappedRange());
+    for (let i = 0; i < this.vertexCount; i++) {
       array[i * stride + 0] = vertices.positions[i * 3 + 0];
       array[i * stride + 1] = vertices.positions[i * 3 + 1];
       array[i * stride + 2] = vertices.positions[i * 3 + 2];
@@ -147,17 +150,29 @@ export class Geometry {
           break;
       }
     }
-    return array;
+    buffer.unmap();
+    return buffer;
   }
 
-  private buildIndexArray(indices?: number[]) {
-    if (!indices) {
-      return null;
-    } else if (this.needs32Bits(indices)) {
-      return new Uint32Array(indices);
+  private buildIndexArray(label: string, indices: number[]) {
+    const indexSize = this.indexFormat === 'uint32' ? Uint32Array.BYTES_PER_ELEMENT : Uint16Array.BYTES_PER_ELEMENT;
+    const buffer = this.renderer.device.createBuffer({
+      label: `IndexBuffer(${label})`,
+      size: align(indices.length * indexSize),
+      usage: GPUBufferUsage.INDEX,
+      mappedAtCreation: true,
+    });
+    let array: Uint32Array | Uint16Array;
+    if (this.indexFormat === 'uint32') {
+      array = new Uint32Array(buffer.getMappedRange());
     } else {
-      return new Uint16Array(indices);
+      array = new Uint16Array(buffer.getMappedRange());
     }
+    for (const i of indices) {
+      array[i] = i;
+    }
+    buffer.unmap();
+    return buffer;
   }
 
   /**

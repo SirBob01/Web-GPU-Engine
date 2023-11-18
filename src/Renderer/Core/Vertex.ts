@@ -49,13 +49,43 @@ export interface VertexPositionNormalTangentUV {
 export type VertexLayout = VertexPosition | VertexPositionColor | VertexPositionUV | VertexPositionNormal | VertexPositionNormalColor | VertexPositionNormalUV | VertexPositionNormalTangentUV;
 
 /**
+ * GPU instance buffer layout definition.
+ */
+export const INSTANCE_BUFFER_LAYOUT: GPUVertexBufferLayout = {
+  attributes: [
+    {
+      shaderLocation: 0,
+      offset: 0,
+      format: "float32x4",
+    },
+    {
+      shaderLocation: 1,
+      offset: 16,
+      format: "float32x4",
+    },
+    {
+      shaderLocation: 2,
+      offset: 32,
+      format: "float32x4",
+    },
+    {
+      shaderLocation: 3,
+      offset: 48,
+      format: "float32x4",
+    },
+  ],
+  arrayStride: 64,
+  stepMode: "instance",
+}
+
+/**
  * GPU vertex buffer layout definitions.
  */
 export const VERTEX_BUFFER_LAYOUTS: Record<VertexLayout['type'], GPUVertexBufferLayout> = {
   'position': {
     attributes: [
       {
-        shaderLocation: 0, // position
+        shaderLocation: 4, // position
         offset: 0,
         format: "float32x3",
       },
@@ -66,12 +96,12 @@ export const VERTEX_BUFFER_LAYOUTS: Record<VertexLayout['type'], GPUVertexBuffer
   'position-color': {
     attributes: [
       {
-        shaderLocation: 0, // position
+        shaderLocation: 4, // position
         offset: 0,
         format: "float32x3",
       },
       {
-        shaderLocation: 1, // color
+        shaderLocation: 5, // color
         offset: 12,
         format: "float32x4",
       },
@@ -82,12 +112,12 @@ export const VERTEX_BUFFER_LAYOUTS: Record<VertexLayout['type'], GPUVertexBuffer
   'position-uv': {
     attributes: [
       {
-        shaderLocation: 0, // position
+        shaderLocation: 4, // position
         offset: 0,
         format: "float32x3",
       },
       {
-        shaderLocation: 1, // uv
+        shaderLocation: 5, // uv
         offset: 12,
         format: "float32x2",
       },
@@ -98,12 +128,12 @@ export const VERTEX_BUFFER_LAYOUTS: Record<VertexLayout['type'], GPUVertexBuffer
   'position-normal': {
     attributes: [
       {
-        shaderLocation: 0, // position
+        shaderLocation: 4, // position
         offset: 0,
         format: "float32x3",
       },
       {
-        shaderLocation: 1, // normal
+        shaderLocation: 5, // normal
         offset: 12,
         format: "float32x3",
       },
@@ -114,17 +144,17 @@ export const VERTEX_BUFFER_LAYOUTS: Record<VertexLayout['type'], GPUVertexBuffer
   'position-normal-color': {
     attributes: [
       {
-        shaderLocation: 0, // position
+        shaderLocation: 4, // position
         offset: 0,
         format: "float32x3",
       },
       {
-        shaderLocation: 1, // normal
+        shaderLocation: 5, // normal
         offset: 12,
         format: "float32x3",
       },
       {
-        shaderLocation: 2, // color
+        shaderLocation: 6, // color
         offset: 24,
         format: "float32x4",
       },
@@ -135,17 +165,17 @@ export const VERTEX_BUFFER_LAYOUTS: Record<VertexLayout['type'], GPUVertexBuffer
   'position-normal-uv': {
     attributes: [
       {
-        shaderLocation: 0, // position
+        shaderLocation: 4, // position
         offset: 0,
         format: "float32x3",
       },
       {
-        shaderLocation: 1, // normal
+        shaderLocation: 5, // normal
         offset: 12,
         format: "float32x3",
       },
       {
-        shaderLocation: 2, // uv
+        shaderLocation: 6, // uv
         offset: 24,
         format: "float32x2",
       },
@@ -156,22 +186,22 @@ export const VERTEX_BUFFER_LAYOUTS: Record<VertexLayout['type'], GPUVertexBuffer
   'position-normal-tangent-uv': {
     attributes: [
       {
-        shaderLocation: 0, // position
+        shaderLocation: 4, // position
         offset: 0,
         format: "float32x3",
       },
       {
-        shaderLocation: 1, // normal
+        shaderLocation: 5, // normal
         offset: 12,
         format: "float32x3",
       },
       {
-        shaderLocation: 2, // tangent
+        shaderLocation: 6, // tangent
         offset: 24,
         format: "float32x3",
       },
       {
-        shaderLocation: 3, // uv
+        shaderLocation: 7, // uv
         offset: 36,
         format: "float32x2",
       },
