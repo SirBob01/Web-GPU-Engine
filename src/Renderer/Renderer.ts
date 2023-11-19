@@ -21,7 +21,9 @@ export class Renderer {
   private shaderCache: Map<string, Record<VertexLayout['type'], GPUShaderModule>> = new Map();
   private pipelineGroups: Map<number, Record<VertexLayout['type'], GPURenderPipeline>> = new Map();
   
-  private constructor(canvas: HTMLCanvasElement, device: GPUDevice) {
+  private resizeObserver: ResizeObserver;
+
+  private constructor(canvas: HTMLCanvasElement, device: GPUDevice, resizeObserver: ResizeObserver) {
     this.canvas = canvas;
     this.device = device;
     this.context = canvas.getContext("webgpu") as GPUCanvasContext;
@@ -32,6 +34,8 @@ export class Renderer {
     });
 
     this.clearColor = new Color();
+
+    this.resizeObserver = resizeObserver;
   }
 
   private createPipelineGroup(material: Material) {
@@ -113,7 +117,7 @@ export class Renderer {
     });
     resizeObserver.observe(config.container);
 
-    return new Renderer(canvas, device);
+    return new Renderer(canvas, device, resizeObserver);
   }
 
   /**
@@ -187,5 +191,6 @@ export class Renderer {
   dispose() {
     this.context.unconfigure();
     this.device.destroy();
+    this.resizeObserver.disconnect();
   }
 }
