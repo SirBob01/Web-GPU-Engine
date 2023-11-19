@@ -26,7 +26,9 @@ const CUBE_INDICES = [
   0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17,
   18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35
 ];
-const CUBE_TRANSFORM = mat4.translation([-1, -0.5, 6]);
+const CUBE_TRANSFORM_0 = mat4.translation([-1.5, 0, 6]);
+const CUBE_TRANSFORM_1 = mat4.translation([0, 0, 6]);
+const CUBE_TRANSFORM_2 = mat4.translation([1.5, 0, 6]);
 const KEYSTATE = new Set<string>();
 
 function App() {
@@ -59,6 +61,7 @@ function App() {
           label: 'Cube 1',
           geometry: cubeGeometry,
           material,
+          instanceCount: 3,
         });
         setCube(cube);
 
@@ -73,10 +76,12 @@ function App() {
   // Run main render loop
   useEffect(() => {
     const mainLoop = () => {
-      mat4.rotateX(CUBE_TRANSFORM, Math.PI / 180, CUBE_TRANSFORM);
-      cube?.transform(CUBE_TRANSFORM);
-      renderer?.render();
-      animationRequestRef.current = window.requestAnimationFrame(mainLoop);
+      mat4.rotateX(CUBE_TRANSFORM_0, Math.PI / 180, CUBE_TRANSFORM_0);
+      cube?.transform(CUBE_TRANSFORM_0, 0);
+      mat4.rotateX(CUBE_TRANSFORM_1, Math.PI / 180, CUBE_TRANSFORM_1);
+      cube?.transform(CUBE_TRANSFORM_1, 1);
+      mat4.rotateX(CUBE_TRANSFORM_2, Math.PI / 180, CUBE_TRANSFORM_2);
+      cube?.transform(CUBE_TRANSFORM_2, 2);
 
       if (KEYSTATE.has('a')) {
         vec3.add(renderer!.camera.eye, [-0.01, 0, 0], renderer!.camera.eye);
@@ -96,6 +101,9 @@ function App() {
       if (KEYSTATE.has('e')) {
         vec3.add(renderer!.camera.eye, [0, 0.01, 0], renderer!.camera.eye);
       }
+
+      renderer?.render();
+      animationRequestRef.current = window.requestAnimationFrame(mainLoop);
     };
     animationRequestRef.current = window.requestAnimationFrame(mainLoop);
 
