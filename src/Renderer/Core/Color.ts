@@ -36,7 +36,10 @@ export class Color {
    * Convert the color to a hex value.
    */
   toHex(): number {
-    return ((this.r * 255) << 16) + ((this.g * 255) << 8) + (this.b * 255);
+    const r = Math.round(this.r * 255);
+    const g = Math.round(this.g * 255);
+    const b = Math.round(this.b * 255);
+    return (r << 16) + (g << 8) + b;
   }
 
   /**
