@@ -9,7 +9,13 @@ struct VertexOut {
 fn vertex_main(instance: InstanceIn, vertexIn: VertexIn) -> VertexOut {
   var output: VertexOut;
   var vertex = transformVertex(vertexIn);
-  output.position = vec4f(vertex.position, 1.0);
+  var model = mat4x4<f32>(
+    instance.model_matrix_0,
+    instance.model_matrix_1,
+    instance.model_matrix_2,
+    instance.model_matrix_3
+  );
+  output.position = camera * model * vec4f(vertex.position, 1.0);
   output.color = vertex.color;
   return output;
 }

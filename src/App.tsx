@@ -1,76 +1,68 @@
 import { useEffect, useRef, useState } from 'react'
 import { Geometry, Material, Model, Renderer, BASIC_SHADER } from './Renderer'
-import { mat4 } from 'wgpu-matrix';
 import './App.css'
+import { mat4, vec3 } from 'wgpu-matrix';
+
+const CUBE_POSITIONS = new Float32Array([
+  -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, 0.5, -0.5,
+  0.5, 0.5, -0.5,    -0.5, 0.5, -0.5, -0.5, -0.5, -0.5,
+
+  -0.5, -0.5, 0.5,  0.5, -0.5, 0.5,  0.5, 0.5, 0.5,
+  0.5, 0.5, 0.5,     -0.5, 0.5, 0.5,  -0.5, -0.5, 0.5,
+
+  -0.5, 0.5, 0.5,    -0.5, 0.5, -0.5, -0.5, -0.5, -0.5,
+  -0.5, -0.5, -0.5, -0.5, -0.5, 0.5, -0.5, 0.5, 0.5,
+
+  0.5, 0.5, 0.5,     0.5, 0.5, -0.5,  0.5, -0.5, -0.5,
+  0.5, -0.5, -0.5,  0.5, -0.5, 0.5,  0.5, 0.5, 0.5,
+
+  -0.5, -0.5, -0.5, 0.5, -0.5, -0.5, 0.5, -0.5, 0.5,
+  0.5, -0.5, 0.5,    -0.5, -0.5, 0.5, -0.5, -0.5, -0.5,
+
+  -0.5, 0.5, -0.5,  0.5, 0.5, -0.5,  0.5, 0.5, 0.5,
+  0.5, 0.5, 0.5,     -0.5, 0.5, 0.5,  -0.5, 0.5, -0.5
+]);
+const CUBE_INDICES = [
+  0,  1,  2,  3,  4,  5,  6,  7,  8,  9,  10, 11, 12, 13, 14, 15, 16, 17,
+  18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35
+];
+const CUBE_TRANSFORM = mat4.translation([-1, -0.5, 6]);
+const KEYSTATE = new Set<string>();
 
 function App() {
   const animationRequestRef = useRef<number>();
   const [renderer, setRenderer] = useState<Renderer | null>(null);
   const [container, setContainer] = useState<HTMLElement | null>(null);
-  
+  const [cube, setCube] = useState<Model | null>(null);
+
   // Initialize the renderer
   useEffect(() => {
     if (container && renderer === null) {
       Renderer.createRenderer({ container }).then((renderer) => {
         setRenderer(renderer);
-        const g1 = new Geometry({
-          label: 'Triangle 1',
+        const cubeGeometry = new Geometry({
+          label: 'Cube 1',
           renderer,
           vertices: {
-            type: 'position-color',
-            positions: new Float32Array([
-              0, 1, 0,
-              0, -1, 0,
-              1, -1, 0
-            ]),
-            colors: new Float32Array([
-              1, 0, 0, 1,
-              0, 1, 0, 1,
-              0, 0, 1, 1
-            ])
-          }
-        });
-        const g2 = new Geometry({
-          label: 'Triangle 2',
-          renderer,
-          vertices: {
-            type: 'position-color',
-            positions: new Float32Array([
-              -1, 1, 0,
-              -1, -1, 0,
-              1, -1, 0,
-            ]),
-            colors: new Float32Array([
-              1, 0, 0, 1,
-              0, 1, 0, 1,
-              0, 0, 1, 1
-            ])
-          }
+            type: 'position',
+            positions: CUBE_POSITIONS,
+          },
+          indices: CUBE_INDICES,
         });
         const material = new Material({
           renderer,
           shaderCode: BASIC_SHADER,
           uniforms: {},
         });
-        renderer.models.add(new Model({
+        const cube = new Model({
           renderer,
-          label: 'Triangle 1',
-          geometry: g1,
-          material,
-        }));
-        const model = new Model({
-          renderer,
-          label: 'Triangle 2',
-          geometry: g2,
+          label: 'Cube 1',
+          geometry: cubeGeometry,
           material,
         });
-        renderer.models.add(new Model({
-          renderer,
-          label: 'Triangle 2',
-          geometry: g2,
-          material,
-        }));
-        model.transform(mat4.identity());
+        setCube(cube);
+
+        renderer.models.add(cube);
         renderer.clearColor.setFromHex(0xAA00AA);
       });
     }
@@ -81,15 +73,52 @@ function App() {
   // Run main render loop
   useEffect(() => {
     const mainLoop = () => {
+      mat4.rotateX(CUBE_TRANSFORM, Math.PI / 180, CUBE_TRANSFORM);
+      cube?.transform(CUBE_TRANSFORM);
       renderer?.render();
       animationRequestRef.current = window.requestAnimationFrame(mainLoop);
+
+      if (KEYSTATE.has('a')) {
+        vec3.add(renderer!.camera.eye, [-0.01, 0, 0], renderer!.camera.eye);
+      }
+      if (KEYSTATE.has('d')) {
+        vec3.add(renderer!.camera.eye, [0.01, 0, 0], renderer!.camera.eye);
+      }
+      if (KEYSTATE.has('s')) {
+        vec3.add(renderer!.camera.eye, [0, 0, -0.01], renderer!.camera.eye);
+      }
+      if (KEYSTATE.has('w')) {
+        vec3.add(renderer!.camera.eye, [0, 0, 0.01], renderer!.camera.eye);
+      }
+      if (KEYSTATE.has('q')) {
+        vec3.add(renderer!.camera.eye, [0, -0.01, 0], renderer!.camera.eye);
+      }
+      if (KEYSTATE.has('e')) {
+        vec3.add(renderer!.camera.eye, [0, 0.01, 0], renderer!.camera.eye);
+      }
     };
     animationRequestRef.current = window.requestAnimationFrame(mainLoop);
 
     return () => {
       cancelAnimationFrame(animationRequestRef.current!);
     }
-  }, [renderer]);
+  }, [cube, renderer]);
+
+  // Attach event handlers
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      KEYSTATE.add(e.key);
+    }
+    const onKeyUp = (e: KeyboardEvent) => {
+      KEYSTATE.delete(e.key);
+    }
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('keyup', onKeyUp);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('keyup', onKeyUp);
+    }
+  }, []);
 
   return (
     <div id="container" ref={setContainer}/>

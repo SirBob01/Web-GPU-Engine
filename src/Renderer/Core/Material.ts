@@ -31,7 +31,7 @@ export class Material {
   constructor(descriptor: MaterialDescriptor) {
     this.shaderModules = descriptor.renderer.getShaderModules(descriptor.shaderCode);
     this.uniforms = descriptor.uniforms;
-    this.culling = descriptor.culling ?? 'back';
+    this.culling = descriptor.culling ?? 'none';
     this.primitiveToplogy = descriptor.primitiveTopology ?? 'triangle-list';
     this.diffuseTexture = descriptor.diffuseTexture ?? null;
     this.diffuseColor = descriptor.diffuseColor ?? new Color(1, 1, 1);

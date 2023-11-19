@@ -106,6 +106,9 @@ function getVertexTransformer(layout: VertexLayout['type']) {
  */
 export function getVertexShaderInput(layout: VertexLayout['type']) {
   return `
+    @group(0) @binding(0) // 1.
+    var<uniform> camera: mat4x4<f32>;
+
     struct InstanceIn {
       @location(0) model_matrix_0: vec4f,
       @location(1) model_matrix_1: vec4f,

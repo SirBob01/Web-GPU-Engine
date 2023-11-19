@@ -37,11 +37,11 @@ export class Uniform {
   /**
    * Write some data onto the buffer.
    *
-   * @param offset
    * @param data
+   * @param dst_offset
    */
-  write(offset: number, data: ArrayBufferView) {
-    this.renderer.device.queue.writeBuffer(this.buffer, offset, data.buffer, data.byteOffset, data.byteLength);
+  write(data: ArrayBufferView, dst_offset = 0) {
+    this.renderer.device.queue.writeBuffer(this.buffer, dst_offset, data.buffer, data.byteOffset, data.byteLength);
   }
 
   /**

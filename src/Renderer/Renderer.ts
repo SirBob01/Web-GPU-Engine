@@ -1,5 +1,5 @@
-import { getVertexShaderInput } from ".";
-import { Color, INSTANCE_BUFFER_LAYOUT, Material, Model, VERTEX_BUFFER_LAYOUTS, VertexLayout } from "./Core";
+import { getVertexShaderInput } from "./Shaders";
+import { Camera, Color, INSTANCE_BUFFER_LAYOUT, Material, Model, Uniform, VERTEX_BUFFER_LAYOUTS, VertexLayout } from "./Core";
 
 /**
  * Renderer configuration.
@@ -12,21 +12,33 @@ interface RendererDesc {
  * WebGPU based renderer.
  */
 export class Renderer {
-  readonly canvas: HTMLCanvasElement;
   readonly device: GPUDevice;
+  readonly canvas: HTMLCanvasElement;
   readonly context: GPUCanvasContext;
-  readonly clearColor: Color;
   readonly models: Set<Model> = new Set();
+  
+  readonly clearColor: Color;
+  readonly camera: Camera;
+
+  private cameraUniform: Uniform;
+  private uniformBindGroupLayout: GPUBindGroupLayout;
+  private pipelineLayout: GPUPipelineLayout;
+  private cameraBindGroup: GPUBindGroup;
 
   private shaderCache: Map<string, Record<VertexLayout['type'], GPUShaderModule>> = new Map();
-  private pipelineGroups: Map<number, Record<VertexLayout['type'], GPURenderPipeline>> = new Map();
-  
+  private pipelineGroups: Map<number, Record<VertexLayout['type'], GPURenderPipeline>> = new Map(); 
+
   private resizeObserver: ResizeObserver;
 
-  private constructor(canvas: HTMLCanvasElement, device: GPUDevice, resizeObserver: ResizeObserver) {
-    this.canvas = canvas;
+  private constructor(container: HTMLElement, device: GPUDevice) {
     this.device = device;
-    this.context = canvas.getContext("webgpu") as GPUCanvasContext;
+
+    this.canvas = document.createElement("canvas");
+    this.canvas.width = container.clientWidth;
+    this.canvas.height = container.clientHeight;
+    container.appendChild(this.canvas);
+
+    this.context = this.canvas.getContext("webgpu") as GPUCanvasContext;
     this.context.configure({
       device,
       format: navigator.gpu.getPreferredCanvasFormat(),
@@ -34,8 +46,55 @@ export class Renderer {
     });
 
     this.clearColor = new Color();
+    this.camera = new Camera();
+    this.cameraUniform = new Uniform({
+      renderer: this,
+      label: "Camera",
+      size: 64,
+    });
 
-    this.resizeObserver = resizeObserver;
+    // TODO: Better abstraction?
+    this.uniformBindGroupLayout = this.device.createBindGroupLayout({
+      entries: [
+        {
+          binding: 0,
+          visibility: GPUShaderStage.VERTEX,
+          buffer: {
+            type: "uniform",
+          },
+        },
+      ],
+    });
+    this.pipelineLayout = this.device.createPipelineLayout({
+      bindGroupLayouts: [
+        this.uniformBindGroupLayout,
+      ],
+    });
+    this.cameraBindGroup = this.device.createBindGroup({
+      layout: this.uniformBindGroupLayout,
+      entries: [
+        {
+          binding: 0,
+          resource: {
+            buffer: this.cameraUniform.buffer,
+          },
+        },
+      ],
+    });
+
+    
+    // Listen for canvas resizing to update the camera aspect ratio
+    this.resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentBoxSize) {
+          const contentBoxSize = entry.contentBoxSize[0];
+          this.canvas.width = contentBoxSize.inlineSize;
+          this.canvas.height = contentBoxSize.blockSize;
+          this.camera.aspect = this.canvas.width / this.canvas.height;
+        }
+      }
+    });
+    this.resizeObserver.observe(container);
   }
 
   private createPipelineGroup(material: Material) {
@@ -60,9 +119,10 @@ export class Renderer {
           ],
         },
         primitive: {
-          topology: "triangle-list",
+          cullMode: material.culling,
+          topology: material.primitiveToplogy,
         },
-        layout: "auto"
+        layout: this.pipelineLayout
       });
       pipelineGroup.set(layoutType as VertexLayout['type'], pipeline);
     }
@@ -99,25 +159,7 @@ export class Renderer {
       throw new Error("Failed to create GPU device.");
     }
 
-    // Create the canvas
-    const canvas = document.createElement("canvas");
-    canvas.width = config.container.clientWidth;
-    canvas.height = config.container.clientHeight;
-    config.container.appendChild(canvas);
-
-    // Resize the canvas to fit the container
-    const resizeObserver = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        if (entry.contentBoxSize) {
-          const contentBoxSize = entry.contentBoxSize[0];
-          canvas.width = contentBoxSize.inlineSize;
-          canvas.height = contentBoxSize.blockSize;
-        }
-      }
-    });
-    resizeObserver.observe(config.container);
-
-    return new Renderer(canvas, device, resizeObserver);
+    return new Renderer(config.container, device);
   }
 
   /**
@@ -151,6 +193,12 @@ export class Renderer {
    * Render a frame.
    */
   render() {
+    // Camera to uniform buffer
+    this.cameraUniform.write(new Float32Array(this.camera.matrix));
+    // TODO: Is it slow to create this on the fly?
+
+
+    // Setup the command queue and renderpass
     const commandEncoder = this.device.createCommandEncoder();
     const renderpass = commandEncoder.beginRenderPass({
       colorAttachments: [
@@ -163,11 +211,13 @@ export class Renderer {
       ],
     });
   
+    // Render the models
     for (const model of this.models) {
       const pipelineGroup = this.getPipelineGroup(model.material);
       const pipeline = pipelineGroup[model.geometry.layout];
 
       renderpass.setPipeline(pipeline);
+      renderpass.setBindGroup(0, this.cameraBindGroup);
       renderpass.setVertexBuffer(0, model.instances);
       renderpass.setVertexBuffer(1, model.geometry.vertices);
       renderpass.setIndexBuffer(model.geometry.indices, model.geometry.indexFormat);
