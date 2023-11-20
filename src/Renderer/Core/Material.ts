@@ -10,7 +10,8 @@ export interface MaterialDescriptor {
   renderer: Renderer;
   shaderCode: string;
   uniforms: Record<string, Uniform>;
-  primitiveTopology?: GPUPrimitiveTopology;
+  topology?: GPUPrimitiveTopology;
+  winding?: GPUFrontFace;
   diffuseColor?: Color;
   diffuseTexture?: Texture;
   culling?: GPUCullMode;
@@ -23,7 +24,8 @@ export class Material {
   readonly id = materialId++;
   readonly shaderModules: Record<VertexLayout['type'], GPUShaderModule>;
   readonly uniforms: Record<string, Uniform>;
-  readonly primitiveToplogy: GPUPrimitiveTopology;
+  readonly toplogy: GPUPrimitiveTopology;
+  readonly winding: GPUFrontFace;
   readonly culling: GPUCullMode;
   readonly diffuseTexture: Texture | null = null;
   readonly diffuseColor: Color;
@@ -32,7 +34,8 @@ export class Material {
     this.shaderModules = descriptor.renderer.getShaderModules(descriptor.shaderCode);
     this.uniforms = descriptor.uniforms;
     this.culling = descriptor.culling ?? 'none';
-    this.primitiveToplogy = descriptor.primitiveTopology ?? 'triangle-list';
+    this.toplogy = descriptor.topology ?? 'triangle-list';
+    this.winding = descriptor.winding ?? 'ccw';
     this.diffuseTexture = descriptor.diffuseTexture ?? null;
     this.diffuseColor = descriptor.diffuseColor ?? new Color(1, 1, 1);
   }

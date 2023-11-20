@@ -120,7 +120,8 @@ export class Renderer {
         },
         primitive: {
           cullMode: material.culling,
-          topology: material.primitiveToplogy,
+          topology: material.toplogy,
+          frontFace: material.winding,
         },
         layout: this.pipelineLayout
       });
