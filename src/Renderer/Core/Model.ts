@@ -1,5 +1,5 @@
 
-import { Mat4 } from "wgpu-matrix";
+import { Mat4, mat4 } from "wgpu-matrix";
 import { Renderer } from "../Renderer";
 import { Geometry } from "./Geometry";
 import { Material } from "./Material";
@@ -57,6 +57,12 @@ export class Model {
       size: this.instanceCount * INSTANCE_BUFFER_LAYOUT.arrayStride,
       usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
     });
+    
+    // Default position of the models.
+    const identity = mat4.identity();
+    for (let i = 0; i < this.instanceCount; i++) {
+      this.transform(identity, i);
+    }
   }
 
   /**

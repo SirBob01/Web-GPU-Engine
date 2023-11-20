@@ -78,9 +78,9 @@ function App() {
     const mainLoop = () => {
       mat4.rotateX(CUBE_TRANSFORM_0, Math.PI / 180, CUBE_TRANSFORM_0);
       cube?.transform(CUBE_TRANSFORM_0, 0);
-      mat4.rotateX(CUBE_TRANSFORM_1, Math.PI / 180, CUBE_TRANSFORM_1);
+      mat4.rotateY(CUBE_TRANSFORM_1, Math.PI / 180, CUBE_TRANSFORM_1);
       cube?.transform(CUBE_TRANSFORM_1, 1);
-      mat4.rotateX(CUBE_TRANSFORM_2, Math.PI / 180, CUBE_TRANSFORM_2);
+      mat4.rotateZ(CUBE_TRANSFORM_2, Math.PI / 180, CUBE_TRANSFORM_2);
       cube?.transform(CUBE_TRANSFORM_2, 2);
 
       if (KEYSTATE.has('a')) {
