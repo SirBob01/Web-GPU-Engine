@@ -75,4 +75,11 @@ export class Model {
     const buffer = new Float32Array(transform);
     this.renderer.device.queue.writeBuffer(this.instances, index * INSTANCE_BUFFER_LAYOUT.arrayStride, buffer, 0, buffer.length);
   }
+
+  /**
+   * Dispose of the model.
+   */
+  dispose() {
+    this.instances.destroy();
+  }
 }
