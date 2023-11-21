@@ -33,7 +33,7 @@ export class Material {
   constructor(descriptor: MaterialDescriptor) {
     this.shaderModules = descriptor.renderer.getShaderModules(descriptor.shaderCode);
     this.uniforms = descriptor.uniforms;
-    this.culling = descriptor.culling ?? 'none';
+    this.culling = descriptor.culling ?? 'back';
     this.toplogy = descriptor.topology ?? 'triangle-list';
     this.winding = descriptor.winding ?? 'ccw';
     this.diffuseTexture = descriptor.diffuseTexture ?? null;

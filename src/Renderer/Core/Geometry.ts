@@ -36,20 +36,26 @@ export class Geometry {
   readonly indexFormat: GPUIndexFormat;
 
   readonly vertices: GPUBuffer;
-  readonly indices: GPUBuffer;
+  readonly indices: GPUBuffer | null;
 
   constructor(descriptor: GeometryDescriptor) {
     this.renderer = descriptor.renderer;
     this.vertexCount = descriptor.vertices.positions.length / 3;
-    const indices = descriptor.indices ?? Array.from(new Array(this.vertexCount), (_, i) => i);
-    this.indexCount = indices.length;
+    this.indexCount = descriptor.indices?.length ?? 0;
    
     this.layout = descriptor.vertices.type;
-    this.indexFormat = this.needs32Bit(indices) ? 'uint32' : 'uint16';
+    this.indexFormat = 'uint16';
+    if (descriptor.indices && this.needs32Bit(descriptor.indices)) {
+      this.indexFormat = 'uint32';
+    }
 
-    this.verifyGeometry(descriptor.vertices, indices);
+    this.verifyGeometry(descriptor.vertices, descriptor.indices);
     this.vertices = this.buildVertexArray(descriptor.label, descriptor.vertices);
-    this.indices = this.buildIndexArray(descriptor.label, indices);
+    if (descriptor.indices) {
+      this.indices = this.buildIndexArray(descriptor.label, descriptor.indices);
+    } else {
+      this.indices = null;
+    }
   }
 
   private needs32Bit(array: number[]) {
@@ -168,8 +174,8 @@ export class Geometry {
     } else {
       array = new Uint16Array(buffer.getMappedRange());
     }
-    for (const i of indices) {
-      array[i] = i;
+    for (let i = 0; i < indices.length; i++) {
+      array[i] = indices[i];
     }
     buffer.unmap();
     return buffer;
@@ -180,6 +186,6 @@ export class Geometry {
    */
   dispose() {
     this.vertices.destroy();
-    this.indices.destroy();
+    this.indices?.destroy();
   }
 }

@@ -221,14 +221,15 @@ export class Renderer {
       renderpass.setBindGroup(0, this.cameraBindGroup);
       renderpass.setVertexBuffer(0, model.instances);
       renderpass.setVertexBuffer(1, model.geometry.vertices);
-      renderpass.setIndexBuffer(model.geometry.indices, model.geometry.indexFormat);
-      renderpass.drawIndexed(
-        model.geometry.indexCount,
-        model.instanceCount,
-        0,
-        0,
-        0,
-      );
+      if (model.geometry.indices) {
+        renderpass.setIndexBuffer(model.geometry.indices, model.geometry.indexFormat);
+        renderpass.drawIndexed(
+          model.geometry.indexCount,
+          model.instanceCount,
+        );
+      } else {
+        renderpass.draw(model.geometry.vertexCount, model.instanceCount);
+      }
     }
 
     renderpass.end();
