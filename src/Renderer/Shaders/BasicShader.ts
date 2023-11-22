@@ -15,6 +15,12 @@ fn vertex_main(instance: InstanceIn, vertexIn: VertexIn) -> VertexOut {
     instance.model_matrix_2,
     instance.model_matrix_3
   );
+  var normal = mat4x4<f32>(
+    instance.normal_matrix_0,
+    instance.normal_matrix_1,
+    instance.normal_matrix_2,
+    instance.normal_matrix_3
+  );
   output.position = camera * model * vec4f(vertex.position, 1.0);
   output.color = vertex.color;
   return output;

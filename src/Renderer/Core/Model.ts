@@ -72,8 +72,17 @@ export class Model {
    * @param index
    */
   transform(transform: Mat4, index = 0) {
-    const buffer = new Float32Array(transform);
-    this.renderer.device.queue.writeBuffer(this.instances, index * INSTANCE_BUFFER_LAYOUT.arrayStride, buffer, 0, buffer.length);
+    const normal = mat4.invert(transform);
+    mat4.transpose(normal, normal);
+
+    const buffer = new Float32Array([...transform, ...normal]);
+    this.renderer.device.queue.writeBuffer(
+      this.instances,
+      index * INSTANCE_BUFFER_LAYOUT.arrayStride,
+      buffer, 
+      0,
+      buffer.length
+    );
   }
 
   /**

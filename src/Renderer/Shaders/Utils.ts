@@ -10,41 +10,41 @@ function getVertexInput(layout: VertexLayout['type']) {
   switch (layout) {
     case 'position':
       return `
-        @location(4) position: vec3f,
+        @location(8) position: vec3f,
       `;
     case 'position-color':
       return `
-        @location(4) position: vec3f,
-        @location(5) color: vec4f,
+        @location(8) position: vec3f,
+        @location(9) color: vec4f,
       `;
     case 'position-uv':
       return `
-        @location(4) position: vec3f,
-        @location(5) uv: vec2f,
+        @location(8) position: vec3f,
+        @location(9) uv: vec2f,
       `;
     case 'position-normal':
       return `
-        @location(4) position: vec3f,
-        @location(5) normal: vec3f,
+        @location(8) position: vec3f,
+        @location(9) normal: vec3f,
       `;
     case 'position-normal-color':
       return `
-        @location(4) position: vec3f,
-        @location(5) normal: vec3f,
-        @location(6) color: vec4f,
+        @location(8) position: vec3f,
+        @location(9) normal: vec3f,
+        @location(10) color: vec4f,
       `;
     case 'position-normal-uv':
       return `
-        @location(4) position: vec3f,
-        @location(5) normal: vec3f,
-        @location(6) uv: vec2f,
+        @location(8) position: vec3f,
+        @location(9) normal: vec3f,
+        @location(10) uv: vec2f,
       `;
     case 'position-normal-tangent-uv':
       return `
-        @location(4) position: vec3f,
-        @location(5) normal: vec3f,
-        @location(6) tangent: vec3f,
-        @location(7) uv: vec2f,
+        @location(8) position: vec3f,
+        @location(9) normal: vec3f,
+        @location(10) tangent: vec3f,
+        @location(11) uv: vec2f,
       `;
   }
 }
@@ -114,6 +114,10 @@ export function getVertexShaderInput(layout: VertexLayout['type']) {
       @location(1) model_matrix_1: vec4f,
       @location(2) model_matrix_2: vec4f,
       @location(3) model_matrix_3: vec4f,
+      @location(4) normal_matrix_0: vec4f,
+      @location(5) normal_matrix_1: vec4f,
+      @location(6) normal_matrix_2: vec4f,
+      @location(7) normal_matrix_3: vec4f,
     }
     struct VertexIn {
       ${getVertexInput(layout)}
