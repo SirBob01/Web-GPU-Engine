@@ -2,7 +2,7 @@
 import { Mat4, mat4 } from "wgpu-matrix";
 import { Renderer } from "../Renderer";
 import { Geometry } from "./Geometry";
-import { Material } from "./Material";
+import { Material } from "../Material";
 import { INSTANCE_BUFFER_LAYOUT } from ".";
 
 export interface ModelDescriptor {

@@ -1,5 +1,6 @@
 import { getVertexShaderInput } from "./Shaders";
-import { Camera, Color, INSTANCE_BUFFER_LAYOUT, Material, Model, Uniform, VERTEX_BUFFER_LAYOUTS, VertexLayout } from "./Core";
+import { Camera, Color, INSTANCE_BUFFER_LAYOUT, Model, Uniform, VERTEX_BUFFER_LAYOUTS, VertexLayout } from "./Core";
+import { Material } from './Material';
 
 /**
  * Renderer configuration.
@@ -26,7 +27,7 @@ export class Renderer {
   private cameraBindGroup: GPUBindGroup;
 
   private shaderCache: Map<string, Record<VertexLayout['type'], GPUShaderModule>> = new Map();
-  private pipelineGroups: Map<number, Record<VertexLayout['type'], GPURenderPipeline>> = new Map(); 
+  private pipelineGroups: Map<Material, Record<VertexLayout['type'], GPURenderPipeline>> = new Map(); 
 
   private resizeObserver: ResizeObserver;
 
@@ -120,7 +121,7 @@ export class Renderer {
         },
         primitive: {
           cullMode: material.culling,
-          topology: material.toplogy,
+          topology: material.topology,
           frontFace: material.winding,
         },
         layout: this.pipelineLayout
@@ -131,10 +132,10 @@ export class Renderer {
   }
 
   private getPipelineGroup(material: Material) {
-    let pipelineGroup = this.pipelineGroups.get(material.id);
+    let pipelineGroup = this.pipelineGroups.get(material);
     if (!pipelineGroup) {
       pipelineGroup = this.createPipelineGroup(material);
-      this.pipelineGroups.set(material.id, pipelineGroup);
+      this.pipelineGroups.set(material, pipelineGroup);
     }
     return pipelineGroup;
   }

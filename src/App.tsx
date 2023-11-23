@@ -35,6 +35,38 @@ const CUBE_POSITIONS = new Float32Array([
   -1, -1, -1,
   1, -1, -1,
 ]);
+const CUBE_NORMALS = new Float32Array([
+  // top (0, 0, 1)
+  0, 0, 1,
+  0, 0, 1,
+  0, 0, 1,
+  0, 0, 1,
+  // bottom (0, 0, -1)
+  0, 0, -1,
+  0, 0, -1,
+  0, 0, -1,
+  0, 0, -1,
+  // right (1, 0, 0)
+  1, 0, 0,
+  1, 0, 0,
+  1, 0, 0,
+  1, 0, 0,
+  // left (-1, 0, 0)
+  -1, 0, 0,
+  -1, 0, 0,
+  -1, 0, 0,
+  -1, 0, 0,
+  // front (0, 1, 0)
+  0, 1, 0,
+  0, 1, 0,
+  0, 1, 0,
+  0, 1, 0,
+  // back (0, -1, 0)
+  0, -1, 0,
+  0, -1, 0,
+  0, -1, 0,
+  0, -1, 0,
+]);
 const CUBE_COLORS = new Float32Array([
   // top (0, 0, 1)
   -1, -1, 1, 1,
@@ -95,9 +127,10 @@ function App() {
           label: 'Cube 1',
           renderer,
           vertices: {
-            type: 'position-color',
+            type: 'position-normal-color',
             positions: CUBE_POSITIONS,
             colors: CUBE_COLORS,
+            normals: CUBE_NORMALS
           },
           indices: CUBE_INDICES,
         });
